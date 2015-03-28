@@ -5,7 +5,7 @@ This code extends the sample you can build by following the official Microsoft g
  - Receive remote push notifications even if app is not running
  - Open the app by click the notification and controls which activity open
 
-I've tested this code on Asus Fonepad 6 (not on emulator).
+I've tested this code on Asus Fonepad 6 with Android 4.4.2 (not on emulator).
 
 Getting started
 -------------
