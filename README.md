@@ -24,7 +24,8 @@ Insert those values in Constants.cs file (in NotificationHubSample project) and 
 Other details
 -------------
 Note that if you run the project in DEBUG mode from Visual Studio, notifications in status bar will disappear when you close the app and, moreover, your notifications won't be managed by the app. 
-You have to run the app in RELEASE mode (or without debug) to publish the app on the device and to be able to manage push notification even if the app is not running.
+**You have to run the app in RELEASE mode (or without debug) to publish the app on the device and to be able to manage push notification even if the app is not running.**
+I waste a lot of time because I didn't know this, so, pay attention to this aspect when you test your app!!!
 
 The solution contains two projects:
 
