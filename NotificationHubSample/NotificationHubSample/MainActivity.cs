@@ -1,5 +1,6 @@
 ﻿using Android.App;
 using Android.OS;
+using Android.Util;
 using Android.Widget;
 using Gcm.Client;
 using Debug = System.Diagnostics.Debug;
@@ -23,18 +24,10 @@ namespace NotificationHubSample
             var button = FindViewById<Button>(Resource.Id.MyButton);
 
             button.Click += delegate { button.Text = string.Format("{0} clicks!", count++); };
-            RegisterWithGCM();
+
+            PushHandlerService.Initialize(this);
+            PushHandlerService.Register(this);
         }
 
-        private void RegisterWithGCM()
-        {
-            // Check to ensure everything's setup right
-            GcmClient.CheckDevice(this);
-            GcmClient.CheckManifest(this);
-
-            // Register for push notifications
-            Debug.WriteLine("Registering...");
-            GcmClient.Register(this, Constants.SenderID);
-        }
     }
 }

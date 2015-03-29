@@ -24,8 +24,7 @@ namespace NotificationHubSample
     ///     This class is responsible to manage the notifications.
     /// </summary>
     /// <remarks>
-    ///     Very important: it doesn't work if Visual Studio is in DEBUG mode (I waste a lot of time for this reason, so, pay
-    ///     attention to this)
+    ///     Very important: you have to launch in "Start Without Debugging"
     ///     This code starts from the Official Microsoft's sample (first reference) and evolves with notes in Xamarin Android
     ///     Remote notifications sample (second reference)
     ///     Moreover, I've added also some trivial code to demonstrate how to open a specific activity and how to pass
@@ -46,7 +45,7 @@ namespace NotificationHubSample
     // This attribute is to receive the notification even if the app is not running
     public class MyBroadcastReceiver : GcmBroadcastReceiverBase<PushHandlerService>
     {
-        public const string TAG = "MyBroadcastReceiver-GCM";
+        public const string LOG_CATEGORY = "NotificationHubSample-LOG";
         public static string[] SENDER_IDS = {Constants.SenderID};
     }
 
@@ -54,92 +53,122 @@ namespace NotificationHubSample
     public class PushHandlerService : GcmServiceBase
     {
         public static string RegistrationID { get; private set; }
-        private NotificationHub Hub { get; set; }
+        static NotificationHub Hub;
 
-        protected override void OnMessage(Context context, Intent intent)
+        public static void Initialize(Context context)
         {
-            Log.Info(MyBroadcastReceiver.TAG, "GCM Message Received!");
+            // Call this from our main activity
+            Hub = new NotificationHub(Constants.NotificationHubPath, Constants.ConnectionString, context);
+        }
+
+        public static void Register(Context context)
+        {
+            // Makes this easier to call from our Activity
+            GcmClient.Register(context, Constants.SenderID);
         }
 
         protected override void OnError(Context context, string errorId)
         {
-            throw new NotImplementedException();
+            Log.Info(MyBroadcastReceiver.LOG_CATEGORY, "OnError");
         }
 
         protected override void OnRegistered(Context context, string registrationId)
         {
-            Log.Verbose(MyBroadcastReceiver.TAG, "GCM Registered: " + registrationId);
-            RegistrationID = registrationId;
+            Log.Info(MyBroadcastReceiver.LOG_CATEGORY, "OnRegistered");
 
-            //CreateNotification("PushHandlerService-GCM Registered...", "The device has been Registered, Tap to View!");
-
-            Hub = new NotificationHub(Constants.NotificationHubPath, Constants.ConnectionString, context);
-            try
-            {
-                Hub.UnregisterAll(registrationId);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(MyBroadcastReceiver.TAG, "GCM Exception: " + ex.Message);
-                Debugger.Break();
-            }
-
-            var tags = new List<string> {""}; // create tags if you want
-
-            try
-            {
-                Registration hubRegistration = Hub.Register(registrationId, tags.ToArray());
-            }
-            catch (Exception ex)
-            {
-                Debugger.Break();
-            }
+            //Receive registration Id for sending GCM Push Notifications to
+            var tags = new List<string> { "" }; // tags are just "filters"
+            if (Hub != null)
+                Hub.Register(registrationId, tags.ToArray());
         }
 
         protected override void OnUnRegistered(Context context, string registrationId)
         {
-            throw new NotImplementedException();
+            Log.Info(MyBroadcastReceiver.LOG_CATEGORY, "OnUnRegistered");
+
+
+            if (Hub != null)
+                Hub.Unregister();
         }
 
-        protected override void OnHandleIntent(Intent intent)
+        protected override void OnMessage(Context context, Intent intent)
         {
+            Log.Info(MyBroadcastReceiver.LOG_CATEGORY, "OnMessage");
             if (intent != null)
             {
-                string myFld = null;
-                string action = intent.Action;
-                if (!action.Equals("com.google.android.c2dm.intent.REGISTRATION"))
-                {
-                    var msg = new StringBuilder();
-
-                    if (intent.Extras != null)
-                    {
-                        foreach (string key in intent.Extras.KeySet())
-                            msg.AppendLine(key + "=" + intent.Extras.Get(key));
-
-                        msg.AppendLine(intent.Extras.GetString("msg"));
-                        myFld = intent.Extras.GetString("customField2");
-                    }
-
-
-                    msg.AppendLine(!string.IsNullOrEmpty(action)
-                        ? string.Format("Intent action:{0}", action)
-                        : "Intent action:undefined");
-                    BuildNotificationIntent("OnHandleIntent:RECEIVE", msg.ToString(), myFld == "third");
-                }
+                HandleMessage(intent);
             }
             else
             {
-                BuildNotificationIntent("OnHandleIntent", "No intent");
+                Log.Info(MyBroadcastReceiver.LOG_CATEGORY, "OnMessage::no intent");
             }
+        }
+
+        private void HandleMessage(Intent intent)
+        {
+            // Custom logic... apply whatever you want
+            // This logic happens when a push message is received
+
+            // In this case, following statemens "transform" a push message into a notification message
+            // In particular, through BuildNotificationIntent this method creates an interactive notification message
+            // in other words, when user tap the notification, it activates an Intent and open an Activity
+            string action = intent.Action;
+            var msg = new StringBuilder();
+            string myFld = null;
+            if (intent.Extras != null)
+            {
+                foreach (string key in intent.Extras.KeySet())
+                    msg.AppendLine(key + "=" + intent.Extras.Get(key));
+
+                msg.AppendLine(intent.Extras.GetString("msg"));
+                myFld = intent.Extras.GetString("customField2");
+            }
+
+            msg.AppendLine(!string.IsNullOrEmpty(action)
+                ? string.Format("Intent action:{0}", action)
+                : "Intent action:undefined");
+            BuildNotificationIntent("OnMessage#3", msg.ToString(), myFld == "third");
+            Log.Info(MyBroadcastReceiver.LOG_CATEGORY, "OnMessage#3:{0}", msg.ToString());
+        }
+
+        private void HandleRegistration(Intent intent)
+        {
+            Log.Info(MyBroadcastReceiver.LOG_CATEGORY, "REGISTRATION");
         }
 
 
         /// <summary>
-        ///     Creates the notification
+        /// OnHandleIntent is just an higher level alternative to OnError, OnMessage, OnRegistered and OnUnRegistered
+        /// 
         /// </summary>
-        /// <param name="title"></param>
-        /// <param name="desc"></param>
-        /// <param name="openThird">Just to test the Activity selection criteria</param>
+        /// <param name="intent"></param>
+        protected override void OnHandleIntent(Intent intent)
+        {
+            Log.Info(MyBroadcastReceiver.LOG_CATEGORY, "OnHandleIntent");
+            if (intent != null)
+            {
+                string action = intent.Action;
+                // Here you can put your custom logic
+                if (action.Equals("com.google.android.c2dm.intent.REGISTRATION"))
+                {
+                    HandleRegistration(intent);
+                }
+                else if (action.Equals("com.google.android.c2dm.intent.MESSAGE"))
+                {
+                    HandleMessage(intent);
+                }
+                else
+                {
+                    Log.Info(MyBroadcastReceiver.LOG_CATEGORY, "OnHandleIntent::{0}", action);
+                }
+            }
+            else
+            {
+                Log.Info(MyBroadcastReceiver.LOG_CATEGORY, "OnHandleIntent::no intent");
+            }
+            base.OnHandleIntent(intent);
+        }
+
         private void BuildNotificationIntent(string title, string desc, bool openThird = false)
         {
             var notificationManager = GetSystemService(NotificationService) as NotificationManager;
@@ -150,11 +179,11 @@ namespace NotificationHubSample
             // The following statements control which activity open when user presses the notification
             if (openThird)
             {
-                resultIntent = new Intent(this, typeof (ThirdActivity));
+                resultIntent = new Intent(this, typeof(ThirdActivity));
             }
             else
             {
-                resultIntent = new Intent(this, typeof (NotificationViewActivity));
+                resultIntent = new Intent(this, typeof(NotificationViewActivity));
             }
 
             resultIntent.PutExtra("title", title);
@@ -167,5 +196,6 @@ namespace NotificationHubSample
 
             notificationManager.Notify(1, notification);
         }
+
     }
 }

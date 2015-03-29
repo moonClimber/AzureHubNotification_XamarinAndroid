@@ -10,6 +10,7 @@ namespace NotificationHubSampleConsole
 {
     public class Program
     {
+
         private static string sharedConnectionString = "<your full connection string>"; // i.e. Endpoint=sb://yourservice.servicebus.windows.net/;SharedAccessKeyName=DefaultFullSharedAccessSignature;SharedAccessKey=N/v+LRzdXXXXXXXXlhF0xXXxX78PpzXEvRzXXXxXX00=
         private static string notificationHubPath = "<your hub path>";
 

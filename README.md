@@ -21,11 +21,15 @@ You can obtain the others by complete the "*Configure your Notification Hub*" st
 
 Insert those values in Constants.cs file (in NotificationHubSample project) and in Program.cs file (in NotificationHubSampleConsole project)
 
+After this you can launch the app in Visual Studio with CTRL+F5 (Start Without Debugging)
+Open also "Android Device Logging" view in Visual Studio to monitor the behaviour (debug and breakpoints don't work very well)
+
 Other details
 -------------
-Note that if you run the project in DEBUG mode from Visual Studio, notifications in status bar will disappear when you close the app and, moreover, your notifications won't be managed by the app. 
-**You have to run the app in RELEASE mode (or without debug) to publish the app on the device and to be able to manage push notification even if the app is not running.**
+Note that if you launch the project in DEBUG mode from Visual Studio, notifications in status bar will disappear when you close the app and, moreover, your notifications won't be managed by the app. 
+**You have to launch the app through the "Start Without Debugging" command to publish the app on the device and to be able to manage push notification even if the app is not running.**
 I waste a lot of time because I didn't know this, so, pay attention to this aspect when you test your app!!!
+So, instead the classic "DEBUG" and "BREAKPOINTS" approach, I suggest to use "Android Device Logging" to test your app.
 
 The solution contains two projects:
 
@@ -42,6 +46,7 @@ My development environment is:
  - Visual Studio 2013 Update 4
  - Xamarin 3.9.483.0
  - Xamarin.Android 4.20.0.37
+ - Android Options > Linker > Linking:none (avoid any code optimization by Xamarin Linker)
 
 I use following remote service:
  - Azure Notification Hub ([link](https://msdn.microsoft.com/en-us/library/azure/jj927170.aspx?f=255&MSPPError=-2147217396))
